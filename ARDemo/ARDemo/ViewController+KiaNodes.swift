@@ -40,6 +40,22 @@ private let bikeMountReactiveNodeNames = ["Trunk", "Trunk_lock", "Trunk_part", "
 
 extension ViewController {
 
+    func loadChairNode() {
+        let fileName = "art.scnassets/officeChair.scn"
+        guard let scene = SCNScene(named: fileName) else { return }
+        chairNode = SCNNode()
+
+        let childrenNodes = scene.rootNode.childNodes
+        for child in childrenNodes {
+            chairNode.addChildNode(child as SCNNode)
+        }
+
+        let scale: Float = 0.02
+        //chairNode.scale = SCNVector3Make(scale, scale, scale)
+        chairNode.setUniformScale(0.015)
+        chairNode.rotation = SCNVector4Make(1, 0, 0, -.pi/2)
+    }
+
     func loadATMNode() {
         let url = Bundle.main.url(forResource: "ATM", withExtension: ".obj", subdirectory: "art.scnassets")
         let asset = MDLAsset(url: url!)
@@ -62,7 +78,8 @@ extension ViewController {
         }
 
         atmNode = SCNNode.init(mdlObject: object)
-        atmNode.scale = SCNVector3Make(0.001, 0.001, 0.001)
+        atmNode.setUniformScale(0.002)
+        //atmNode.scale = SCNVector3Make(0.002, 0.002, 0.002)
     }
 
     func loadCarNodes() {

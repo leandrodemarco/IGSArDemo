@@ -18,14 +18,24 @@ class ViewController: UIViewController {
         case chair
     }
 
-    @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet weak var sceneView: ARSCNView!
+    @IBOutlet weak var carSelectedIndicator: UIView!
+    @IBOutlet weak var atmSelectedIndicator: UIView!
+    @IBOutlet weak var chairSelectedIndicator: UIView!
+
     private var focusSquare: FocusSquare = FocusSquare()
     let serialQueue = DispatchQueue(label: "com.igs.ARKitKia.serialSceneKitQueue")
     private var screenCenter: CGPoint!
     private var sceneBounds: CGRect = .zero
     var virtualObjectManager: VirtualObjectManager!
     private var objectAdded = false
-    var currentMode: Mode = .kiaCar
+    var currentMode: Mode = .kiaCar {
+        didSet {
+            carSelectedIndicator.isHidden = (currentMode != .kiaCar)
+            atmSelectedIndicator.isHidden = (currentMode != .atm)
+            chairSelectedIndicator.isHidden = (currentMode != .chair)
+        }
+    }
 
     // MARK: Gestures
     let panGest = UIPanGestureRecognizer()
@@ -36,7 +46,9 @@ class ViewController: UIViewController {
     // MARK: ATM, Chair and Master nodes
     var masterNode: SCNNode?
     var atmNode: SCNNode!
+    var chairNode: SCNNode!
 
+    private var needsToAdjust = true
     // MARK: Car nodes
     var bikeMountReactNodes: [SCNNode] = [] // Nodes that remain always visible and show back bike mount when tapped
     var bikeMountNodes: [SCNNode] = [] // Nodes that are hidden when tapped on them or one of reactive
@@ -84,10 +96,14 @@ class ViewController: UIViewController {
         //sceneView.debugOptions = [ARSCNDebugOptions.showWorldOrigin]
         #endif
 
+        atmSelectedIndicator.isHidden = true
+        chairSelectedIndicator.isHidden = true
+
         // Show statistics such as fps and timing information
         //sceneView.showsStatistics = true
         setupFocusSquare()
         loadATMNode()
+        loadChairNode()
         loadCarNodes()
 
         let tapGR = UITapGestureRecognizer()
@@ -172,24 +188,30 @@ class ViewController: UIViewController {
 // MARK: Mode switching
 extension ViewController {
     @IBAction func onCarTapped(sender: UIButton) {
-        guard let masterNode = masterNode, currentMode != .kiaCar else { return }
-        masterNode.removeAllChildNodes()
+        if objectAdded {
+            guard let masterNode = masterNode, currentMode != .kiaCar else { return }
+            masterNode.removeAllChildNodes()
+            attachCarModel()
+        }
         currentMode = .kiaCar
-        attachCarModel()
     }
 
     @IBAction func onATMTapped(sender: UIButton) {
-        guard let masterNode = masterNode, currentMode != .atm else { return }
-        masterNode.removeAllChildNodes()
+        if objectAdded {
+            guard let masterNode = masterNode, currentMode != .atm else { return }
+            masterNode.removeAllChildNodes()
+            attachATMModel()
+        }
         currentMode = .atm
-        attachATMModel()
     }
 
     @IBAction func onChairTapped(sender: UIButton) {
-        guard let masterNode = masterNode, currentMode != .chair else { return }
-        masterNode.removeAllChildNodes()
+        if objectAdded {
+            guard let masterNode = masterNode, currentMode != .chair else { return }
+            masterNode.removeAllChildNodes()
+            attachChairModel()
+        }
         currentMode = .chair
-        attachChairModel()
     }
 }
 
@@ -271,8 +293,11 @@ extension ViewController: ARSCNViewDelegate {
                                    rearLeftClosed, rearLeftOpened, rearLeftOpen, rearLeftClose,
                                    rearRightClosed, rearRightOpened, rearRightOpen, rearRightClose]
 
-        for node in allNodes {
-            node.worldPosition.y += deltaY
+        if needsToAdjust {
+            for node in allNodes {
+                node.worldPosition.y += deltaY
+            }
+            needsToAdjust = false
         }
     }
 
@@ -283,6 +308,7 @@ extension ViewController: ARSCNViewDelegate {
 
     private func attachChairModel() {
         guard let masterNode = masterNode else { return }
+        masterNode.addChildNode(chairNode)
     }
 
     func session(_ session: ARSession, didFailWithError error: Error) {

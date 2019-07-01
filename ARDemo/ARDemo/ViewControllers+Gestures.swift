@@ -36,7 +36,7 @@ extension ViewController {
             // Translate virtual object
             let deltaX = Float(position.x - latestDragPos!.x)/350
             let deltaY = Float(position.y - latestDragPos!.y)/350
-            guard let parentNode = bodyNode.parent else { return }
+            guard let parentNode = masterNode /*bodyNode.parent*/ else { return }
             parentNode.localTranslate(by: SCNVector3Make(deltaX, 0.0, deltaY))
 
             latestDragPos = position
@@ -69,7 +69,7 @@ extension ViewController {
             let deltaRotation = newRotation - latestRotationAngle!
 
             let rotationAngle = (Float(-deltaRotation) * Float.pi) / 5.0
-            guard let parent = bodyNode.parent else { return }
+            guard let parent = masterNode /*bodyNode.parent*/ else { return }
 
             parent.runAction(SCNAction.rotateBy(x: 0.0, y: CGFloat(rotationAngle), z: 0.0, duration: 0.1))
             latestRotationAngle = newRotation
